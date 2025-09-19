@@ -30,7 +30,7 @@ class Team(QueryBase):
         # from the team table for all teams
         # in the database
         #### YOUR CODE HERE
-        sql_query = """
+        sql_query = f"""
         SELECT 
             team_name,
             team_id AS id
