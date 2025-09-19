@@ -2,6 +2,7 @@
 # YOUR CODE HERE
 from sqlite3 import connect
 from pathlib import Path
+from .sql_execution import QueryMixin
 
 # Define a class called QueryBase
 # Use inheritance to add methods
@@ -40,9 +41,10 @@ class QueryBase(QueryMixin):
         sql_query = f"""
         SELECT 
             event_date,
-            SUM(CASE WHEN event_type = 'positive' THEN 1 ELSE 0 END) AS positive_events,
-            SUM(CASE WHEN event_type = 'negative' THEN 1 ELSE 0 END) AS negative_events
+            SUM(positive_events) AS positive_events,
+            SUM(negative_events) AS negative_events
         FROM {self.name}
+        JOIN employee_events Using({self.name}_id)
         WHERE {self.name}_id = {id}
         GROUP BY event_date
         ORDER BY event_date;
@@ -68,6 +70,12 @@ class QueryBase(QueryMixin):
         SELECT 
             note_date,
             note
-        FROM {self.name}
+        FROM notes
+        JOIN {self.name} 
+        ON notes.{self.name}_id = {self.name}.{self.name}_id
+        WHERE {self.name}.{self.name}_id = {id}
+        ORDER BY note_date;
         """
+
+        return self.pandas_query(sql_query)
 

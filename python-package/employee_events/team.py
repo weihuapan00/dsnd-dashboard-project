@@ -34,7 +34,7 @@ class Team(QueryBase):
         SELECT 
             team_name,
             team_id AS id
-        FROM team;
+        FROM {self.name};
         """
         return self.query(sql_query)
     
@@ -56,7 +56,7 @@ class Team(QueryBase):
         sql_query = f"""
         SELECT 
             team_name
-        FROM team
+        FROM {self.name}
         WHERE team_id = {id};
         """
         return self.query(sql_query)
@@ -72,19 +72,15 @@ class Team(QueryBase):
     #### YOUR CODE HERE
     def model_data(self, id):
         sql_query = f"""
-        SELECT 
-            e.employee_id,
-            e.first_name || ' ' || e.last_name AS employee_name,
-            t.team_id,
-            t.team_name,
-            SUM(CASE WHEN ev.event_type = 'positive' THEN 1 ELSE 0 END) AS total_positive_events,
-            SUM(CASE WHEN ev.event_type = 'negative' THEN 1 ELSE 0 END) AS total_negative_events,
-            COUNT(n.note_id) AS total_notes
-        FROM employee e
-        JOIN team t ON e.team_id = t.team_id
-        LEFT JOIN event ev ON e.employee_id = ev.employee_id
-        LEFT JOIN notes n ON e.employee_id = n.employee_id
-        WHERE t.team_id = {id}
-        GROUP BY e.employee_id, t.team_id;
-        """
+            SELECT positive_events, negative_events FROM (
+                    SELECT employee_id
+                         , SUM(positive_events) positive_events
+                         , SUM(negative_events) negative_events
+                    FROM {self.name}
+                    JOIN employee_events
+                        USING({self.name}_id)
+                    WHERE {self.name}.{self.name}_id = {id}
+                    GROUP BY employee_id
+                   )
+                """
         return self.pandas_query(sql_query)
